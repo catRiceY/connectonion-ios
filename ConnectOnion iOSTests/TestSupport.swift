@@ -103,9 +103,13 @@ final class ControlledReplyClient: ConnectOnionClientProviding {
     private var continuation: AsyncThrowingStream<ConnectOnionClientEvent, Error>.Continuation?
     private(set) var disconnectCount = 0
     private(set) var sentInputs: [AgentInput] = []
+    private(set) var sentAgents: [AgentConfig] = []
+    private(set) var sentSessions: [ConversationSession] = []
 
     func send(input: AgentInput, to agent: AgentConfig, session: ConversationSession) -> AsyncThrowingStream<ConnectOnionClientEvent, Error> {
         sentInputs.append(input)
+        sentAgents.append(agent)
+        sentSessions.append(session)
         return AsyncThrowingStream { continuation in
             self.continuation = continuation
             continuation.yield(.connected(

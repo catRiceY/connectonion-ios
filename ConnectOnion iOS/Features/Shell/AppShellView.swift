@@ -149,6 +149,7 @@ struct AppShellView: View {
             infoStore.refresh(addresses: agentAddresses)
         }
         .onChange(of: agents.map(\.updatedAt)) { _, _ in
+            chatSessionStore.updateAgents(agents.map(\.config))
             publishWidgetSnapshot()
         }
         .onChange(of: conversations.map(\.updatedAt)) { _, _ in
@@ -164,6 +165,8 @@ struct AppShellView: View {
             chatSessionStore.setAppActive(phase == .active)
             if phase == .active {
                 // Re-attach any turn whose socket died while we were suspended.
+                // Update retained configurations before foreground recovery dials.
+                chatSessionStore.updateAgents(agents.map(\.config))
                 chatSessionStore.applicationDidBecomeActive()
                 configureAgentInfoRefresh()
             } else {
@@ -302,6 +305,7 @@ struct AppShellView: View {
     }
 
     private func configureAgentInfoRefresh(refreshImmediately: Bool = true) {
+        chatSessionStore.updateAgents(agents.map(\.config))
         infoStore.setEndpoints(agentEndpointMap)
         infoStore.startAutoRefresh(
             addresses: agentAddresses,

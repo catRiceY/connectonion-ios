@@ -17,7 +17,7 @@ import Observation
 final class ChatViewModel {
     // Internal rather than private so the split-out extensions (ChatViewModel+LiveActivity) can reach
     // them; the type is still the only owner.
-    let agent: AgentConfig
+    private(set) var agent: AgentConfig
     let conversation: ConversationRecord
     /// Per-conversation so an unanswered card's draft can never surface in a different chat — several
     /// card ids (e.g. the onboarding fallback id) are fixed strings shared across conversations.
@@ -107,6 +107,15 @@ final class ChatViewModel {
         if items != restoredItems {
             conversation.messages = items
         }
+    }
+
+    /// Retained conversations outlive the settings/editor view. Refresh their
+    /// routing configuration without replacing the conversation or cancelling
+    /// its current stream. The next send/reconnect takes the new value; an
+    /// already-started client operation keeps its own AgentConfig snapshot.
+    func updateAgent(_ updated: AgentConfig) {
+        guard updated.address == agent.address, updated != agent else { return }
+        agent = updated
     }
 
     /// Any item persisted / left mid-flight as `.running` would keep the peeling-onion animation

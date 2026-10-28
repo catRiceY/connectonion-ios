@@ -30,6 +30,7 @@ final class ChatSessionStore {
         onAgentProfile: @escaping @MainActor (AgentProfile) -> Void = { _ in }
     ) -> ChatViewModel {
         if let existing = sessions[conversation.id] {
+            existing.updateAgent(agent)
             existing.setAgentProfileHandler(onAgentProfile)
             return existing
         }
@@ -54,6 +55,16 @@ final class ChatSessionStore {
         sessions[conversationID] = viewModel
         updateRunningState(viewModel.sessionState, conversationID: conversationID)
         return viewModel
+    }
+
+    /// Also update off-screen retained conversations. This is synchronous on
+    /// MainActor: it neither starts a connection nor replaces an in-flight task.
+    func updateAgents(_ agents: [AgentConfig]) {
+        for agent in agents {
+            for session in sessions.values where session.agent.address == agent.address {
+                session.updateAgent(agent)
+            }
+        }
     }
 
     func isGeneratingReply(for conversationID: UUID) -> Bool {
